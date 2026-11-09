@@ -1,0 +1,435 @@
+<title>N4 · Troca de produto na linha SMT · Equipe A</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #eef0f1;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --line: #e1e0d9;
+    --navy: #163a6b;
+    --teal: #0e8f8a;
+    --series-regua: #898781;
+    --series-reta: #2a78d6;
+    --series-arvore: #1baf7a;
+    --good: #0ca30c;
+    --warning: #c9840f;
+    --warning-bg: #fdf1dc;
+    --good-bg: #e6f6e6;
+    --shape: #e6e9eb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --surface: #1a1a19;
+      --ink: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #8d8c86;
+      --line: #313130;
+      --series-regua: #9a988f;
+      --series-reta: #3987e5;
+      --series-arvore: #199e70;
+      --good: #35c135;
+      --warning: #e7a93a;
+      --warning-bg: #332a14;
+      --good-bg: #122a16;
+      --shape: #222322;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #8d8c86;
+    --line: #313130;
+    --series-regua: #9a988f;
+    --series-reta: #3987e5;
+    --series-arvore: #199e70;
+    --good: #35c135;
+    --warning: #e7a93a;
+    --warning-bg: #332a14;
+    --good-bg: #122a16;
+    --shape: #222322;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--bg);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+  }
+  .stage{
+    height:100vh; width:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 14px;
+    padding: 18px;
+    overflow: hidden;
+  }
+  .deck{
+    position: relative;
+    width: min(94vw, 177.7vh);
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 18px 46px rgba(0,0,0,.16);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .slide{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    padding: 4.6% 6% 0 6%;
+  }
+  .slide.active{ display:flex; }
+
+  .shapes{
+    position:absolute; top:0; right:0; width:52%; height:34%;
+    overflow:hidden; pointer-events:none;
+    -webkit-mask-image: linear-gradient(to bottom left, black 55%, transparent 95%);
+            mask-image: linear-gradient(to bottom left, black 55%, transparent 95%);
+  }
+  .shapes span{
+    position:absolute; background: var(--shape);
+    transform: rotate(-12deg);
+  }
+  .shapes span:nth-child(1){ width:40%; height:30px; top:8%;  right:-6%; }
+  .shapes span:nth-child(2){ width:30%; height:46px; top:24%; right:14%; }
+  .shapes span:nth-child(3){ width:22%; height:22px; top:40%; right:-2%; }
+  .shapes span:nth-child(4){ width:34%; height:60px; top:52%; right:30%; }
+  .shapes span:nth-child(5){ width:18%; height:18px; top:2%;  right:40%; }
+
+  .eyebrow{
+    font-size: 0.62rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1.title{
+    font-size: clamp(1.5rem, 2.9vw, 2.35rem);
+    font-weight: 800; letter-spacing: -.01em; text-wrap: balance;
+    margin: .3em 0 0 0; color: var(--ink);
+  }
+  h2.heading{
+    font-size: clamp(1.15rem, 2.3vw, 1.55rem);
+    font-weight: 800; letter-spacing: -.005em;
+    margin: 0 0 .15em 0; color: var(--ink);
+    position: relative; z-index: 1;
+  }
+  .sub{ font-size: clamp(.85rem,1.3vw,1.02rem); color: var(--ink-2); margin-top:.35em; max-width: 70ch; }
+  .body{ flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; gap: 14px; position:relative; z-index:1; }
+
+  .footer{
+    margin-top:auto;
+    background: linear-gradient(100deg, var(--navy) 0%, var(--teal) 100%);
+    color: #fff;
+    display:flex; align-items:center; justify-content: space-between;
+    padding: 0 3% ;
+    height: 8.4%;
+    flex: 0 0 auto;
+  }
+  .brandrow{ display:flex; align-items:center; gap: 14px; flex-wrap:wrap; }
+  .brandrow span{
+    font-size: .56rem; font-weight: 700; letter-spacing:.06em; text-transform: uppercase;
+    opacity: .95; white-space: nowrap;
+  }
+  .brandrow b{ font-weight: 800; }
+  .divider{ width:1px; height: 13px; background: rgba(255,255,255,.4); }
+  .pagenum{ font-size: .62rem; font-weight:700; letter-spacing:.05em; opacity:.95; font-variant-numeric: tabular-nums; }
+
+  /* ---- components ---- */
+  .cardrow{ display:flex; gap: 16px; }
+  .card{
+    flex:1; background: var(--bg); border:1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card .k{ font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color: var(--teal); }
+  .card h3{ margin:.3em 0 .25em 0; font-size: clamp(.95rem,1.6vw,1.15rem); font-weight:800; }
+  .card p{ margin:0; font-size: clamp(.78rem,1.25vw,.92rem); color: var(--ink-2); line-height:1.42; }
+  .card code{ background: var(--surface); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:.85em; }
+
+  .decision{
+    display:flex; align-items:baseline; gap:10px; border-top: 2px solid var(--line); padding-top: 12px;
+  }
+  .decision .k{ font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color: var(--muted); white-space:nowrap; }
+  .decision p{ margin:0; font-size: clamp(.8rem,1.3vw,.98rem); color: var(--ink); font-weight: 600; }
+
+  .statrow{ display:flex; gap: 14px; }
+  .stat{
+    flex:1; background: var(--bg); border:1px solid var(--line); border-radius:10px;
+    padding: 12px 16px; display:flex; flex-direction:column; gap: 2px;
+  }
+  .stat .lbl{ font-size:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color: var(--muted); }
+  .stat .val{ font-size: clamp(1.1rem,2.4vw,1.6rem); font-weight:800; font-variant-numeric: tabular-nums; }
+  .stat .delta{ font-size:.72rem; font-weight:700; }
+  .stat.good{ border-color: var(--good); background: var(--good-bg); }
+  .stat.good .val{ color: var(--good); }
+  .stat .foot{ font-size:.68rem; color: var(--ink-2); margin-top:2px;}
+
+  /* bar chart */
+  .barchart{ display:flex; flex-direction:column; gap: 11px; }
+  .bar-row{ display:grid; grid-template-columns: 112px 1fr 64px; align-items:center; gap: 10px; }
+  .bar-row .name{ font-size:.78rem; font-weight:700; text-align:right; color: var(--ink-2); }
+  .bar-row .name.win{ color: var(--series-arvore); }
+  .bar-track{ position:relative; height: 16px; background: var(--bg); border-radius:4px; overflow:hidden; border:1px solid var(--line); }
+  .bar-fill{ position:absolute; left:0; top:0; bottom:0; border-radius: 4px; }
+  .bar-row .value{ font-size:.82rem; font-weight:800; font-variant-numeric: tabular-nums; }
+  .bar-row.win .value{ color: var(--series-arvore); }
+  .meta-line{ position:absolute; top:-3px; bottom:-3px; width:2px; background: var(--ink); opacity:.55; }
+  .meta-label{ position:absolute; top:-18px; font-size:.58rem; font-weight:700; color: var(--ink-2); white-space:nowrap; transform: translateX(-50%); }
+
+  /* confusion matrix */
+  .cmwrap{ display:flex; gap: 26px; align-items:center; }
+  .cm{ display:grid; grid-template-columns: 70px repeat(2, 108px); grid-template-rows: 26px repeat(2, 68px); gap: 4px; flex: 0 0 auto;}
+  .cm .lab{ display:flex; align-items:center; justify-content:center; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color: var(--muted); }
+  .cm .rlab{ writing-mode: vertical-rl; transform: rotate(180deg); justify-content:center; grid-row: 2 / span 2; }
+  .cm .cell{ border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border: 1px solid var(--line); }
+  .cm .cell .n{ font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .cm .cell .t{ font-size:.58rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+  .cell.ok{ background: var(--good-bg); }
+  .cell.ok .n{ color: var(--good); }
+  .cell.ok .t{ color: var(--good); }
+  .cell.bad{ background: var(--warning-bg); }
+  .cell.bad .n{ color: var(--warning); }
+  .cell.bad .t{ color: var(--warning); }
+
+  .statgrid{ flex:1; display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .msr{ background: var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 13px; }
+  .msr .lbl{ font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color: var(--muted); }
+  .msr .row{ display:flex; align-items:baseline; gap:8px; margin-top:2px;}
+  .msr .v{ font-size:1.25rem; font-weight:800; font-variant-numeric: tabular-nums; }
+  .msr .arrow{ font-size:.72rem; color: var(--ink-2); }
+  .msr .v2{ font-size:.92rem; font-weight:700; color: var(--ink-2); font-variant-numeric: tabular-nums;}
+
+  .caption{ font-size: clamp(.72rem,1.15vw,.84rem); color: var(--ink-2); line-height:1.45; border-left:3px solid var(--teal); padding-left:10px; max-width: 86ch;}
+
+  .concl-block{ display:flex; gap:16px; }
+  .concl-block .num{ font-size:.66rem; font-weight:800; color:#fff; background: var(--teal); border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .concl-block p{ margin:0; font-size: clamp(.82rem,1.4vw,1rem); line-height:1.5; }
+  .concl-block p b{ color: var(--teal); }
+
+  .names{ font-size: clamp(.85rem,1.4vw,1.02rem); color: var(--ink); margin-top: 1.1em; font-weight:600; }
+  .names .sep{ color: var(--muted); margin: 0 .5em; font-weight:400; }
+  .datebadge{ display:inline-block; margin-top: 1.4em; font-size:.74rem; font-weight:800; letter-spacing:.04em; color: var(--teal); border:1.5px solid var(--teal); border-radius:999px; padding: 4px 14px; }
+
+  .nav{ display:flex; gap: 10px; align-items:center; }
+  .navbtn{
+    width: 38px; height:38px; border-radius: 50%; border:1px solid var(--line); background: var(--surface);
+    color: var(--ink); font-size: 1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .navbtn:hover{ background: var(--bg); }
+  .dots{ display:flex; gap:7px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--line); cursor:pointer; border: none; padding:0; }
+  .dot.active{ background: var(--teal); width: 20px; border-radius: 4px; }
+  .hint{ font-size:.68rem; color: var(--muted); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .slide.active{ animation: fade .35s ease; }
+  }
+  @keyframes fade{ from{ opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+</style>
+
+<div class="stage">
+  <div class="deck" id="deck">
+
+    <!-- SLIDE 1 — CAPA -->
+    <section class="slide active">
+      <div class="shapes"><span></span><span></span><span></span><span></span><span></span></div>
+      <div style="margin-top:12%; position:relative; z-index:1;">
+        <div class="eyebrow">Curso de Capacitação Tecnológica em IA e Transformação Digital · UEA · Cyber Labs · EST</div>
+        <h1 class="title">Troca de produto na linha SMT</h1>
+        <div class="sub">Projeto 4 · N4 · Previsão do tempo de troca (regressão) e identificação de trocas demoradas (classificação)</div>
+        <div class="names">Equipe A &nbsp;·&nbsp; Juliana Ballin Lima<span class="sep">·</span>Fernanda de Oliveira da Costa<span class="sep">·</span>Pedro Henrique Oliveira Dias</div>
+        <div class="datebadge">Apresentação · 09/11</div>
+      </div>
+      <div class="footer">
+        <div class="brandrow">
+          <span><b>LSE</b>-UEA</span><div class="divider"></div>
+          <span>SIALAB UEA</span><div class="divider"></div>
+          <span>C4 Cyber Labs</span><div class="divider"></div>
+          <span>EST</span><div class="divider"></div>
+          <span>UEA</span><div class="divider"></div>
+          <span>Amazonas</span>
+        </div>
+        <div class="pagenum">1 / 5</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2 — O PROBLEMA -->
+    <section class="slide">
+      <h2 class="heading">O problema</h2>
+      <div class="sub" style="margin-bottom:2px;">Na linha SMT, a cada troca de produto a máquina para: o operador tira os alimentadores do produto antigo, coloca os do novo, carrega o programa e confere a primeira placa. Enquanto isso, a linha não produz — e a fábrica só tem ajuda extra para algumas trocas.</div>
+      <div class="body">
+        <div class="cardrow">
+          <div class="card">
+            <div class="k">Quanto? · Regressão</div>
+            <h3>Quantos minutos a troca vai levar</h3>
+            <p>Resposta prevista: <code>tempo_troca_min</code>, em minutos, a partir de informações já conhecidas antes da troca (alimentadores a trocar, % do kit pronto, experiência do operador, linha, turno…).</p>
+          </div>
+          <div class="card">
+            <div class="k">Sim ou não? · Classificação</div>
+            <h3>A troca vai passar de 42 minutos?</h3>
+            <p>Resposta prevista: <code>troca_demorada</code> (1 = sim, 0 = não), com as mesmas entradas da regressão — sem usar o tempo real, que só se conhece depois.</p>
+          </div>
+        </div>
+        <div class="decision">
+          <div class="k">Decisão que isso apoia</div>
+          <p>Escolher, antes da troca começar, onde colocar a ajuda extra disponível na fábrica.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="brandrow"><span>N4 · Troca de produto na linha SMT</span></div>
+        <div class="pagenum">2 / 5</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3 — REGRESSÃO -->
+    <section class="slide">
+      <h2 class="heading">Regressão — quanto tempo a troca vai levar</h2>
+      <div class="sub" style="margin-bottom:6px;">MAE (erro médio, em minutos) na validação — quanto menor, melhor.</div>
+      <div class="body">
+        <div class="barchart" id="barchart">
+          <div class="bar-row">
+            <div class="name">Média (referência)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--series-regua);"></div>
+              <div class="meta-line" style="left:57.4%;"></div></div>
+            <div class="value">6,10 min</div>
+          </div>
+          <div class="bar-row">
+            <div class="name">Reta</div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--series-reta);"></div></div>
+            <div class="value">3,02 min</div>
+          </div>
+          <div class="bar-row win">
+            <div class="name win">Árvore (prof. 4) ✓</div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--series-arvore);"></div></div>
+            <div class="value">2,04 min</div>
+          </div>
+        </div>
+        <div class="statrow">
+          <div class="stat">
+            <div class="lbl">Modelo escolhido</div>
+            <div class="val" style="font-size:1.15rem;">Árvore · profundidade 4</div>
+            <div class="foot">Menor MAE entre as profundidades testadas (1, 2, 4, 6, sem limite) na validação</div>
+          </div>
+          <div class="stat good">
+            <div class="lbl">MAE no teste</div>
+            <div class="val">1,93 min</div>
+            <div class="foot">Meta da atividade: ≤ 3,5 min — dentro da meta</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="brandrow"><span>N4 · Troca de produto na linha SMT</span></div>
+        <div class="pagenum">3 / 5</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4 — CLASSIFICAÇÃO -->
+    <section class="slide">
+      <h2 class="heading">Classificação — a troca vai passar de 42 min?</h2>
+      <div class="sub" style="margin-bottom:6px;">Árvore de profundidade 4 (menor total de erros na validação) · matriz de confusão no teste</div>
+      <div class="body">
+        <div class="cmwrap">
+          <div class="cm">
+            <div class="lab"></div><div class="lab">previsto: não</div><div class="lab">previsto: sim</div>
+            <div class="lab rlab">real: não</div>
+            <div class="cell ok"><div class="n">273</div><div class="t">VN</div></div>
+            <div class="cell bad"><div class="n">35</div><div class="t">FP</div></div>
+            <div class="lab rlab">real: sim</div>
+            <div class="cell bad"><div class="n">13</div><div class="t">FN</div></div>
+            <div class="cell ok"><div class="n">88</div><div class="t">VP</div></div>
+          </div>
+          <div class="statgrid">
+            <div class="msr"><div class="lbl">Acurácia</div><div class="row"><span class="v">88,3%</span><span class="arrow">valid.</span><span class="v2">91,9%</span></div></div>
+            <div class="msr"><div class="lbl">Recall</div><div class="row"><span class="v">87,1%</span><span class="arrow">valid.</span><span class="v2">93,1%</span></div></div>
+            <div class="msr"><div class="lbl">Precisão</div><div class="row"><span class="v">71,5%</span><span class="arrow">valid.</span><span class="v2">78,5%</span></div></div>
+            <div class="msr"><div class="lbl">F1</div><div class="row"><span class="v">78,6%</span><span class="arrow">valid.</span><span class="v2">85,2%</span></div></div>
+          </div>
+        </div>
+        <div class="caption">Valores em destaque são do <b>teste</b> (101 trocas "sim" de 409 casos); o número menor ao lado é a <b>validação</b>, para comparação.</div>
+      </div>
+      <div class="footer">
+        <div class="brandrow"><span>N4 · Troca de produto na linha SMT</span></div>
+        <div class="pagenum">4 / 5</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5 — CONCLUSÃO -->
+    <section class="slide">
+      <h2 class="heading">Conclusão</h2>
+      <div class="body" style="gap:18px;">
+        <div class="concl-block">
+          <div class="num">1</div>
+          <p>No teste, a árvore erra mais por <b>falso positivo</b> (35) do que por <b>falso negativo</b> (13): ela prefere soar o alarme a mais do que deixar passar uma troca realmente demorada. Isso mantém o <b>recall alto (87,1%)</b> — quase não perde trocas demoradas reais — à custa de uma <b>precisão menor (71,5%)</b>, com alguns falsos alarmes.</p>
+        </div>
+        <div class="concl-block">
+          <div class="num">2</div>
+          <p>Os dois modelos cabem no objetivo do projeto: a regressão erra em média <b>1,93 min</b> no teste (meta: ≤ 3,5 min) e a classificação encontra a maior parte das trocas demoradas. Juntos, podem apoiar o supervisor a estimar a duração de cada troca e sinalizar, antes de ela começar, quais merecem ajuda extra.</p>
+        </div>
+        <div class="concl-block">
+          <div class="num">3</div>
+          <p><b>Limitação:</b> os dados cobrem janeiro–agosto e o teste tem só 101 casos "sim" — cada erro pesa bastante no percentual. O modelo não garante acerto em toda troca: ele apoia a decisão do supervisor, não substitui o julgamento dele.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="brandrow">
+          <span><b>LSE</b>-UEA</span><div class="divider"></div>
+          <span>SIALAB UEA</span><div class="divider"></div>
+          <span>C4 Cyber Labs</span><div class="divider"></div>
+          <span>EST</span><div class="divider"></div>
+          <span>UEA</span><div class="divider"></div>
+          <span>Amazonas</span>
+        </div>
+        <div class="pagenum">5 / 5</div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="navbtn" id="prev" aria-label="Slide anterior">‹</button>
+    <div class="dots" id="dots"></div>
+    <button class="navbtn" id="next" aria-label="Próximo slide">›</button>
+    <span class="hint">&nbsp; use as setas do teclado</span>
+  </div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsWrap = document.getElementById('dots');
+  let idx = 0;
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i===0 ? ' active' : '');
+    d.setAttribute('aria-label', 'Ir para slide ' + (i+1));
+    d.addEventListener('click', () => go(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function go(i){
+    idx = (i + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('active', k === idx));
+    dots.forEach((d, k) => d.classList.toggle('active', k === idx));
+    if (idx === 2) animateBars();
+  }
+  document.getElementById('prev').addEventListener('click', () => go(idx - 1));
+  document.getElementById('next').addEventListener('click', () => go(idx + 1));
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') go(idx + 1);
+    if (e.key === 'ArrowLeft') go(idx - 1);
+  });
+
+  function animateBars(){
+    const widths = [6.10, 3.02, 2.04];
+    const max = 6.10;
+    document.querySelectorAll('#barchart .bar-fill').forEach((el, i) => {
+      requestAnimationFrame(() => { el.style.transition = 'width .6s ease'; el.style.width = (widths[i]/max*100) + '%'; });
+    });
+  }
+  animateBars();
+</script>

@@ -1,0 +1,10 @@
+# ambiente virtual Python
+.venv/
+__pycache__/
+*.pyc
+
+# checkpoints do Jupyter
+.ipynb_checkpoints/
+
+# pacote de entrega (gerado a partir dos arquivos já versionados)
+N4_EquipeA.zip
